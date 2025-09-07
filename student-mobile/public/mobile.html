@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#667eea">
+    <title>Campus Events - Student Mobile App</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 14px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin: 8px 0;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            border-radius: 12px;
+            padding: 14px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin: 8px 0;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #667eea;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .feature-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .feature-description {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 12px;
+        }
+
+        .feature-icon {
+            font-size: 24px;
+            margin-right: 12px;
+        }
+
+        .flex {
+            display: flex;
+            align-items: center;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-large {
+            font-size: 18px;
+        }
+
+        .text-muted {
+            color: #666;
+        }
+
+        .mb-4 {
+            margin-bottom: 16px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+        }
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .message {
+            padding: 16px;
+            border-radius: 12px;
+            margin: 16px 0;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 16px;
+            }
+            
+            .stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .grid-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1 style="font-size: 24px; font-weight: bold; color: #333; margin: 0 0 8px 0;">🎓 Student Portal</h1>
+            <p style="font-size: 14px; color: #666; margin: 0;">Campus Event Management</p>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="registeredCount">...</div>
+                <div class="stat-label">Events Registered</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="attendedCount">...</div>
+                <div class="stat-label">Events Attended</div>
+            </div>
+        </div>
+
+        <!-- Feature Cards -->
+        <div>
+            <a href="http://10.30.179.189:3001/events" class="feature-card">
+                <div class="flex">
+                    <div class="feature-icon">🎉</div>
+                    <div style="flex: 1;">
+                        <div class="feature-title">Browse Events</div>
+                        <div class="feature-description">Discover hackathons, workshops, tech talks, and more campus events</div>
+                    </div>
+                    <div style="font-size: 24px; color: #ccc;">→</div>
+                </div>
+            </a>
+
+            <a href="http://10.30.179.189:3001/my-events" class="feature-card">
+                <div class="flex">
+                    <div class="feature-icon">📋</div>
+                    <div style="flex: 1;">
+                        <div class="feature-title">My Events</div>
+                        <div class="feature-description">View all events you have registered for and track your participation</div>
+                    </div>
+                    <div style="font-size: 24px; color: #ccc;">→</div>
+                </div>
+            </a>
+
+            <a href="http://10.30.179.189:3001/feedback" class="feature-card">
+                <div class="flex">
+                    <div class="feature-icon">💬</div>
+                    <div style="flex: 1;">
+                        <div class="feature-title">Give Feedback</div>
+                        <div class="feature-description">Share your experience and help improve future events</div>
+                    </div>
+                    <div style="font-size: 24px; color: #ccc;">→</div>
+                </div>
+            </a>
+
+            <a href="http://10.30.179.189:3001/attendance" class="feature-card">
+                <div class="flex">
+                    <div class="feature-icon">📊</div>
+                    <div style="flex: 1;">
+                        <div class="feature-title">My Attendance</div>
+                        <div class="feature-description">Track your attendance records and participation history</div>
+                    </div>
+                    <div style="font-size: 24px; color: #ccc;">→</div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card text-center">
+            <h3 class="text-large mb-4">Quick Actions</h3>
+            <div class="grid-3">
+                <button class="btn-secondary" style="font-size: 14px; padding: 8px;">🔔</button>
+                <button class="btn-secondary" style="font-size: 14px; padding: 8px;">⚙️</button>
+                <button class="btn-secondary" style="font-size: 14px; padding: 8px;">📞</button>
+            </div>
+        </div>
+
+        <!-- Direct Access -->
+        <div class="card text-center">
+            <h3 class="text-large mb-4">Direct Access</h3>
+            <a href="http://10.30.179.189:3001" class="btn">Open Full App</a>
+            <a href="http://10.30.179.189:3000" class="btn-secondary">Staff Portal</a>
+        </div>
+    </div>
+
+    <script>
+        // Load stats
+        async function loadStats() {
+            try {
+                const [registrationsResponse, attendanceResponse] = await Promise.all([
+                    fetch('http://10.30.179.189:5001/registrations'),
+                    fetch('http://10.30.179.189:5001/attendance')
+                ]);
+
+                const registrations = await registrationsResponse.json();
+                const attendance = await attendanceResponse.json();
+
+                document.getElementById('registeredCount').textContent = registrations.length;
+                document.getElementById('attendedCount').textContent = attendance.filter(a => a.status === 'present').length;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                document.getElementById('registeredCount').textContent = '0';
+                document.getElementById('attendedCount').textContent = '0';
+            }
+        }
+
+        // Load stats when page loads
+        document.addEventListener('DOMContentLoaded', loadStats);
+    </script>
+</body>
+</html>

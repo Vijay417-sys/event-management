@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.campus.events" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>Campus Events</name>
+    <description>Campus Event Management Student Mobile App</description>
+    <author email="campus@events.com" href="https://campus-events.com">
+        Campus Events Team
+    </author>
+    <content src="index.html" />
+    <access origin="*" />
+    <allow-intent href="http://*/*" />
+    <allow-intent href="https://*/*" />
+    <allow-navigation href="*" />
+    <preference name="AndroidInsecureFileModeEnabled" value="true" />
+    <preference name="AllowUntrustedCerts" value="true" />
+    <preference name="MixedContentMode" value="0" />
+</widget>

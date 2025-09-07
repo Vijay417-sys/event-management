@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#6366f1">
+    <title>Campus Events - Student App</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: white;
+            text-align: center;
+        }
+        
+        .logo {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: pulse 2s infinite;
+        }
+        
+        .title {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            font-size: 1rem;
+            opacity: 0.8;
+            margin-bottom: 2rem;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+        
+        .app-frame {
+            width: 100%;
+            height: 100vh;
+            border: none;
+            display: none;
+        }
+        
+        .error-message {
+            color: #ff6b6b;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem;
+            display: none;
+        }
+        
+        .retry-btn {
+            background: white;
+            color: #6366f1;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-container" id="loading">
+        <div class="logo">🎓</div>
+        <div class="title">Campus Events</div>
+        <div class="subtitle">Student Mobile App</div>
+        <div class="loading-spinner"></div>
+        <div>Loading...</div>
+    </div>
+    
+    <div class="error-message" id="error">
+        <h3>Connection Error</h3>
+        <p>Unable to connect to the server. Please check your internet connection and try again.</p>
+        <button class="retry-btn" onclick="loadApp()">Retry</button>
+    </div>
+    
+    <iframe class="app-frame" id="appFrame" src="http://localhost:3001"></iframe>
+    
+    <script>
+        let retryCount = 0;
+        const maxRetries = 3;
+        
+        function loadApp() {
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const appFrame = document.getElementById('appFrame');
+            
+            loading.style.display = 'flex';
+            error.style.display = 'none';
+            appFrame.style.display = 'none';
+            
+            // Test connection first
+            fetch('http://localhost:3001')
+                .then(response => {
+                    if (response.ok) {
+                        // Connection successful, load the app
+                        appFrame.style.display = 'block';
+                        loading.style.display = 'none';
+                        retryCount = 0;
+                    } else {
+                        throw new Error('Server not responding');
+                    }
+                })
+                .catch(err => {
+                    console.error('Connection failed:', err);
+                    retryCount++;
+                    
+                    if (retryCount < maxRetries) {
+                        // Auto retry after 2 seconds
+                        setTimeout(loadApp, 2000);
+                    } else {
+                        // Show error message
+                        loading.style.display = 'none';
+                        error.style.display = 'block';
+                    }
+                });
+        }
+        
+        // Load app when page loads
+        document.addEventListener('DOMContentLoaded', loadApp);
+        
+        // Handle app frame load errors
+        document.getElementById('appFrame').addEventListener('error', function() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+        });
+    </script>
+</body>
+</html>
