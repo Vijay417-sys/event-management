@@ -18,20 +18,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </Link>
               <div className="flex space-x-8">
                 <Link href="/" className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 font-semibold transition-all duration-200 hover:scale-105">
-                  <span className="text-xl">🏠</span>
-                  <span>Dashboard</span>
+                  <span className="text-xl">🏠</span><span>Dashboard</span>
                 </Link>
                 <Link href="/events" className="flex items-center space-x-2 text-gray-600 hover:text-green-600 font-semibold transition-all duration-200 hover:scale-105">
-                  <span className="text-xl">📅</span>
-                  <span>Manage Events</span>
+                  <span className="text-xl">📅</span><span>Manage Events</span>
                 </Link>
                 <Link href="/reports" className="flex items-center space-x-2 text-gray-600 hover:text-purple-600 font-semibold transition-all duration-200 hover:scale-105">
-                  <span className="text-xl">📊</span>
-                  <span>Reports</span>
+                  <span className="text-xl">📊</span><span>Reports</span>
                 </Link>
                 <Link href="/feedback" className="flex items-center space-x-2 text-gray-600 hover:text-yellow-600 font-semibold transition-all duration-200 hover:scale-105">
-                  <span className="text-xl">📝</span>
-                  <span>Feedback</span>
+                  <span className="text-xl">📝</span><span>Feedback</span>
                 </Link>
               </div>
             </div>
@@ -42,4 +38,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
-
