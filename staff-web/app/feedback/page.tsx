@@ -3,6 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
+/* ✅ BACKEND URL (works locally + deployed) */
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001';
+
 interface Feedback {
   feedback_id: number;
   student_id: number;
@@ -26,18 +30,20 @@ const FeedbackPage: React.FC = () => {
     fetchFeedback();
   }, []);
 
+  /* ✅ FIXED FETCH (NO localhost hardcoding) */
   const fetchFeedback = async () => {
     try {
-      const response = await fetch('http://localhost:5001/staff/feedback');
-      if (response.ok) {
-        const data = await response.json();
-        setFeedback(data);
-      } else {
-        setError('Failed to fetch feedback');
+      const response = await fetch(`${BACKEND_URL}/staff/feedback`);
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch feedback');
       }
+
+      const data = await response.json();
+      setFeedback(data);
     } catch (err) {
-      setError('Error fetching feedback');
       console.error('Error fetching feedback:', err);
+      setError('Error fetching feedback');
     } finally {
       setLoading(false);
     }
@@ -103,121 +109,99 @@ const FeedbackPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Stats Cards */}
+        {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-xl shadow-lg">
-            <div className="text-center">
-              <div className="text-3xl mb-2">📊</div>
-              <div className="text-2xl font-bold text-blue-600">{feedback.length}</div>
-              <div className="text-gray-600">Total Feedback</div>
+          <div className="bg-white p-6 rounded-xl shadow-lg text-center">
+            <div className="text-3xl mb-2">📊</div>
+            <div className="text-2xl font-bold text-blue-600">
+              {feedback.length}
             </div>
+            <div className="text-gray-600">Total Feedback</div>
           </div>
-          <div className="bg-white p-6 rounded-xl shadow-lg">
-            <div className="text-center">
-              <div className="text-3xl mb-2">⭐</div>
-              <div className="text-2xl font-bold text-yellow-600">
-                {feedback.length > 0 
-                  ? (feedback.reduce((sum, f) => sum + f.rating, 0) / feedback.length).toFixed(1)
-                  : '0.0'
-                }
-              </div>
-              <div className="text-gray-600">Average Rating</div>
+
+          <div className="bg-white p-6 rounded-xl shadow-lg text-center">
+            <div className="text-3xl mb-2">⭐</div>
+            <div className="text-2xl font-bold text-yellow-600">
+              {feedback.length > 0
+                ? (
+                    feedback.reduce((sum, f) => sum + f.rating, 0) /
+                    feedback.length
+                  ).toFixed(1)
+                : '0.0'}
             </div>
+            <div className="text-gray-600">Average Rating</div>
           </div>
-          <div className="bg-white p-6 rounded-xl shadow-lg">
-            <div className="text-center">
-              <div className="text-3xl mb-2">😊</div>
-              <div className="text-2xl font-bold text-green-600">
-                {feedback.filter(f => f.rating >= 4).length}
-              </div>
-              <div className="text-gray-600">Positive (4+ stars)</div>
+
+          <div className="bg-white p-6 rounded-xl shadow-lg text-center">
+            <div className="text-3xl mb-2">😊</div>
+            <div className="text-2xl font-bold text-green-600">
+              {feedback.filter((f) => f.rating >= 4).length}
             </div>
+            <div className="text-gray-600">Positive</div>
           </div>
-          <div className="bg-white p-6 rounded-xl shadow-lg">
-            <div className="text-center">
-              <div className="text-3xl mb-2">😐</div>
-              <div className="text-2xl font-bold text-orange-600">
-                {feedback.filter(f => f.rating < 3).length}
-              </div>
-              <div className="text-gray-600">Needs Improvement</div>
+
+          <div className="bg-white p-6 rounded-xl shadow-lg text-center">
+            <div className="text-3xl mb-2">😐</div>
+            <div className="text-2xl font-bold text-orange-600">
+              {feedback.filter((f) => f.rating < 3).length}
             </div>
+            <div className="text-gray-600">Needs Improvement</div>
           </div>
         </div>
 
         {/* Feedback List */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-2xl font-bold text-gray-800">All Feedback</h2>
-          </div>
-          
           {feedback.length === 0 ? (
             <div className="p-12 text-center">
               <div className="text-6xl mb-4">📝</div>
-              <h3 className="text-xl font-semibold text-gray-600 mb-2">No Feedback Yet</h3>
-              <p className="text-gray-500">Students haven't submitted any feedback yet.</p>
+              <p className="text-gray-500">No feedback yet.</p>
             </div>
           ) : (
-            <div className="divide-y divide-gray-200">
-              {feedback.map((item) => (
-                <div key={item.feedback_id} className="p-6 hover:bg-gray-50 transition-colors">
-                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                    {/* Student Info */}
-                    <div className="flex items-start space-x-4">
-                      <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                        {item.student_name.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-800 text-lg">{item.student_name}</h3>
-                        <p className="text-gray-600 text-sm">{item.student_email}</p>
-                        <p className="text-gray-500 text-xs">
-                          {new Date(item.feedback_date).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Event Info */}
-                    <div className="lg:text-right">
-                      <h4 className="font-semibold text-gray-800">{item.event_name}</h4>
-                      <p className="text-gray-600 text-sm">{item.event_type}</p>
-                      <p className="text-gray-500 text-xs">
-                        {new Date(item.event_date).toLocaleDateString()}
-                      </p>
-                    </div>
+            feedback.map((item) => (
+              <div
+                key={item.feedback_id}
+                className="p-6 border-b hover:bg-gray-50"
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-semibold">{item.student_name}</h3>
+                    <p className="text-sm text-gray-600">
+                      {item.student_email}
+                    </p>
                   </div>
-
-                  {/* Rating */}
-                  <div className="mt-4 flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm font-medium text-gray-600">Rating:</span>
-                      <div className="flex space-x-1">
-                        {getRatingStars(item.rating)}
-                      </div>
-                      <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getRatingColor(item.rating)}`}>
-                        {item.rating}/5
-                      </span>
-                    </div>
+                  <div className="text-right">
+                    <p className="font-semibold">{item.event_name}</p>
+                    <p className="text-sm text-gray-500">{item.event_type}</p>
                   </div>
-
-                  {/* Comment */}
-                  {item.comment && (
-                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                      <p className="text-gray-700 italic">"{item.comment}"</p>
-                    </div>
-                  )}
                 </div>
-              ))}
-            </div>
+
+                <div className="mt-3 flex items-center gap-2">
+                  {getRatingStars(item.rating)}
+                  <span
+                    className={`px-2 py-1 rounded-full text-sm ${getRatingColor(
+                      item.rating
+                    )}`}
+                  >
+                    {item.rating}/5
+                  </span>
+                </div>
+
+                {item.comment && (
+                  <p className="mt-3 italic text-gray-700">
+                    “{item.comment}”
+                  </p>
+                )}
+              </div>
+            ))
           )}
         </div>
 
-        {/* Back Button */}
         <div className="mt-8 text-center">
           <Link
             href="/"
-            className="inline-flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
           >
-            <span>←</span>
-            <span>Back to Dashboard</span>
+            ← Back to Dashboard
           </Link>
         </div>
       </div>
