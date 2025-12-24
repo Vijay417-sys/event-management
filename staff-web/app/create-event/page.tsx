@@ -20,26 +20,20 @@ const CreateEventPage: React.FC = () => {
     setSubmitting(true);
 
     try {
-      const response = await fetch(`${BACKEND_URL}/events`, {
+      const res = await fetch(`${BACKEND_URL}/events`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ college_id: collegeId, name, type, date }),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create event');
-      }
-
-      setMessage(data.message || 'Event created successfully!');
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || 'Failed to create event');
+      setMessage(body.message || 'Event created successfully!');
       setCollegeId('');
       setName('');
       setType('');
       setDate('');
     } catch (err: any) {
+      console.error('Create event error:', err);
       setError(err.message || 'Error creating event');
     } finally {
       setSubmitting(false);
@@ -48,7 +42,6 @@ const CreateEventPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-animated relative">
-      {/* Floating Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-20 h-20 bg-white/10 rounded-full float"></div>
         <div className="absolute top-40 right-20 w-16 h-16 bg-white/10 rounded-full float" style={{animationDelay: '2s'}}></div>
@@ -59,52 +52,26 @@ const CreateEventPage: React.FC = () => {
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-8 animate-slide-up">
             <div className="inline-block p-6 bg-white/20 backdrop-blur-md rounded-3xl mb-6">
-              <h1 className="text-5xl font-bold text-white mb-2 drop-shadow-lg">
-                🎉 Create Event
-              </h1>
+              <h1 className="text-5xl font-bold text-white mb-2 drop-shadow-lg">🎉 Create Event</h1>
             </div>
-            <p className="text-xl text-white/90 font-medium drop-shadow-md">
-              Bring your campus community together with amazing events!
-            </p>
+            <p className="text-xl text-white/90 font-medium drop-shadow-md">Bring your campus community together with amazing events!</p>
           </div>
 
           <div className="card-modern p-8 animate-fade-in">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label htmlFor="collegeId" className="block text-gray-700 text-lg font-semibold mb-3">🏫 College ID</label>
-                <input
-                  type="text"
-                  id="collegeId"
-                  className="input-modern"
-                  placeholder="Enter college identifier"
-                  value={collegeId}
-                  onChange={(e) => setCollegeId(e.target.value)}
-                  required
-                />
+                <input type="text" id="collegeId" className="input-modern" placeholder="Enter college identifier" value={collegeId} onChange={(e) => setCollegeId(e.target.value)} required />
               </div>
 
               <div>
                 <label htmlFor="name" className="block text-gray-700 text-lg font-semibold mb-3">📝 Event Name</label>
-                <input
-                  type="text"
-                  id="name"
-                  className="input-modern"
-                  placeholder="Enter event name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
+                <input type="text" id="name" className="input-modern" placeholder="Enter event name" value={name} onChange={(e) => setName(e.target.value)} required />
               </div>
 
               <div>
                 <label htmlFor="type" className="block text-gray-700 text-lg font-semibold mb-3">🏷️ Event Type</label>
-                <select
-                  id="type"
-                  className="input-modern"
-                  value={type}
-                  onChange={(e) => setType(e.target.value)}
-                  required
-                >
+                <select id="type" className="input-modern" value={type} onChange={(e) => setType(e.target.value)} required>
                   <option value="">Select Event Type</option>
                   <option value="Hackathon">🚀 Hackathon</option>
                   <option value="Workshop">🛠️ Workshop</option>
@@ -116,34 +83,15 @@ const CreateEventPage: React.FC = () => {
 
               <div>
                 <label htmlFor="date" className="block text-gray-700 text-lg font-semibold mb-3">📅 Event Date</label>
-                <input
-                  type="date"
-                  id="date"
-                  className="input-modern"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  required
-                />
+                <input type="date" id="date" className="input-modern" value={date} onChange={(e) => setDate(e.target.value)} required />
               </div>
 
-              <button
-                type="submit"
-                className="btn-modern w-full text-lg"
-                disabled={submitting}
-              >
+              <button type="submit" className="btn-modern w-full text-lg" disabled={submitting}>
                 {submitting ? 'Creating...' : '✨ Create Event'}
               </button>
 
-              {message && (
-                <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg animate-fade-in">
-                  ✅ {message}
-                </div>
-              )}
-              {error && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg animate-fade-in">
-                  ❌ Error: {error}
-                </div>
-              )}
+              {message && <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg animate-fade-in">✅ {message}</div>}
+              {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg animate-fade-in">❌ Error: {error}</div>}
             </form>
           </div>
         </div>
