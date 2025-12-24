@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+const BACKEND_URL = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001').replace(/\/$/, '');
 
 interface Registration {
   reg_id: number;
@@ -35,7 +35,7 @@ interface AttendanceRecord {
 const EventAttendancePage: React.FC = () => {
   const params = useParams();
   const searchParams = useSearchParams();
-  const eventId = params.eventId as string;
+  const eventId = params?.eventId as string;
 
   const [event, setEvent] = useState<Event | null>(null);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
@@ -51,63 +51,55 @@ const EventAttendancePage: React.FC = () => {
       fetchRegistrations();
       fetchAttendanceRecords();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventId]);
 
   const fetchEventDetails = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/events`);
-      if (response.ok) {
-        const events = await response.json();
-        const currentEvent = events.find(
-          (e: Event) => e.event_id === parseInt(eventId)
-        );
-        setEvent(currentEvent || null);
-      }
+      const res = await fetch(`${BACKEND_URL}/events`);
+      if (!res.ok) throw new Error(`Failed to load events (${res.status})`);
+      const events: Event[] = await res.json();
+      const currentEvent = events.find(e => e.event_id === parseInt(eventId));
+      setEvent(currentEvent || null);
     } catch (err) {
       console.error('Error fetching event details:', err);
+      setError('Unable to load event details.');
     }
   };
 
   const fetchRegistrations = async () => {
     try {
-      const response = await fetch(
-        `${BACKEND_URL}/staff/registrations/${eventId}`
-      );
-      if (response.ok) {
-        const data: Registration[] = await response.json();
-        setRegistrations(data);
-      }
+      const res = await fetch(`${BACKEND_URL}/staff/registrations/${eventId}`);
+      if (!res.ok) throw new Error(`Failed to load registrations (${res.status})`);
+      const data: Registration[] = await res.json();
+      setRegistrations(data);
     } catch (err) {
       console.error('Error fetching registrations:', err);
+      setError('Unable to load registrations.');
     }
   };
 
   const fetchAttendanceRecords = async () => {
     try {
-      const response = await fetch(
-        `${BACKEND_URL}/staff/attendance/${eventId}`
-      );
-      if (response.ok) {
-        const data: AttendanceRecord[] = await response.json();
-        setAttendanceRecords(data);
-      }
+      const res = await fetch(`${BACKEND_URL}/staff/attendance/${eventId}`);
+      if (!res.ok) throw new Error(`Failed to load attendance (${res.status})`);
+      const data: AttendanceRecord[] = await res.json();
+      setAttendanceRecords(data);
     } catch (err) {
-      console.error('Error fetching attendance records:', err);
+      console.error('Error fetching attendance:', err);
+      setError('Unable to load attendance records.');
     } finally {
       setLoading(false);
     }
   };
 
-  const markAttendance = async (
-    studentId: number,
-    status: 'present' | 'absent'
-  ) => {
+  const markAttendance = async (studentId: number, status: 'present' | 'absent') => {
     setMarkingAttendance(studentId);
     setMessage(null);
     setError(null);
 
     try {
-      const response = await fetch(`${BACKEND_URL}/staff/attendance`, {
+      const res = await fetch(`${BACKEND_URL}/staff/attendance`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -116,25 +108,20 @@ const EventAttendancePage: React.FC = () => {
           status
         })
       });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to mark attendance');
-      }
-
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || 'Failed to mark attendance');
       setMessage(`Attendance marked as ${status} successfully!`);
-      fetchAttendanceRecords();
+      await fetchAttendanceRecords();
     } catch (err: any) {
-      setError(err.message);
+      console.error('Mark attendance error:', err);
+      setError(err.message || 'Error marking attendance');
     } finally {
       setMarkingAttendance(null);
     }
   };
 
   const getAttendanceStatus = (studentId: number) => {
-    const record = attendanceRecords.find(
-      r => r.student_id === studentId
-    );
+    const record = attendanceRecords.find(r => r.student_id === studentId);
     return record ? record.status : null;
   };
 
@@ -148,15 +135,9 @@ const EventAttendancePage: React.FC = () => {
 
   return (
     <div className="min-h-screen container mx-auto px-4 py-8">
-      <Link href="/events" className="text-blue-600 mb-6 inline-block">
-        ← Back to Events
-      </Link>
+      <Link href="/events" className="text-blue-600 mb-6 inline-block">← Back to Events</Link>
 
-      {event && (
-        <h1 className="text-3xl font-bold mb-6">
-          Mark Attendance – {event.name}
-        </h1>
-      )}
+      {event && <h1 className="text-3xl font-bold mb-6">Mark Attendance – {event.name}</h1>}
 
       {message && <p className="text-green-600 mb-4">{message}</p>}
       {error && <p className="text-red-600 mb-4">{error}</p>}
@@ -168,24 +149,18 @@ const EventAttendancePage: React.FC = () => {
             <div key={reg.reg_id} className="border p-4 rounded-lg">
               <h3 className="font-semibold">{reg.name}</h3>
               <p className="text-sm text-gray-600">{reg.email}</p>
-              <p className="text-sm mb-2">
-                Status: {status || 'Not marked'}
-              </p>
+              <p className="text-sm mb-2">Status: {status || 'Not marked'}</p>
 
               <div className="flex gap-2">
                 <button
-                  onClick={() =>
-                    markAttendance(reg.student_id, 'present')
-                  }
+                  onClick={() => markAttendance(reg.student_id, 'present')}
                   disabled={markingAttendance === reg.student_id}
                   className="bg-green-500 text-white px-3 py-1 rounded"
                 >
                   Present
                 </button>
                 <button
-                  onClick={() =>
-                    markAttendance(reg.student_id, 'absent')
-                  }
+                  onClick={() => markAttendance(reg.student_id, 'absent')}
                   disabled={markingAttendance === reg.student_id}
                   className="bg-red-500 text-white px-3 py-1 rounded"
                 >
