@@ -2,6 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+// put near the top of the file (below imports)
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001';
+
 
 interface Event {
   event_id: number;
@@ -24,7 +27,7 @@ const StaffEventsPage: React.FC = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await fetch('http://localhost:5001/staff/events');
+        const response = await fetch(`${BACKEND_URL}/staff/events`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
