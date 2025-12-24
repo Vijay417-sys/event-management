@@ -26,7 +26,7 @@ interface Event {
 
 const EventRegistrationsPage: React.FC = () => {
   const params = useParams();
-  const eventId = params.eventId as string;
+  const eventId = params?.eventId as string;
 
   const [event, setEvent] = useState<Event | null>(null);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
@@ -43,14 +43,11 @@ const EventRegistrationsPage: React.FC = () => {
 
   const fetchEventDetails = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/events`);
-      if (response.ok) {
-        const events = await response.json();
-        const currentEvent = events.find((e: Event) => e.event_id === parseInt(eventId));
-        setEvent(currentEvent || null);
-      } else {
-        console.error('Failed to fetch events for details:', response.status);
-      }
+      const res = await fetch(`${BACKEND_URL}/events`);
+      if (!res.ok) return;
+      const events: Event[] = await res.json();
+      const currentEvent = events.find(e => e.event_id === parseInt(eventId));
+      setEvent(currentEvent || null);
     } catch (err) {
       console.error('Error fetching event details:', err);
     }
@@ -59,13 +56,12 @@ const EventRegistrationsPage: React.FC = () => {
   const fetchRegistrations = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${BACKEND_URL}/staff/registrations/${eventId}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data: Registration[] = await response.json();
+      const res = await fetch(`${BACKEND_URL}/staff/registrations/${eventId}`);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data: Registration[] = await res.json();
       setRegistrations(data);
     } catch (err: any) {
+      console.error('Error fetching registrations:', err);
       setError(err.message || 'Failed to fetch registrations');
     } finally {
       setLoading(false);
@@ -101,9 +97,7 @@ const EventRegistrationsPage: React.FC = () => {
           <div className="text-6xl mb-4">❌</div>
           <h2 className="text-2xl font-bold text-red-600 mb-4">Error Loading Registrations</h2>
           <p className="text-gray-600 mb-4">{error}</p>
-          <Link href="/events" className="btn-primary">
-            ← Back to Events
-          </Link>
+          <Link href="/events" className="btn-primary">← Back to Events</Link>
         </div>
       </div>
     );
@@ -112,12 +106,9 @@ const EventRegistrationsPage: React.FC = () => {
   return (
     <div className="min-h-screen gradient-bg">
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
         <div className="text-center mb-8 animate-slide-up">
           <div className="flex items-center justify-center space-x-4 mb-4">
-            <Link href="/events" className="text-blue-600 hover:text-blue-800 transition-colors">
-              ← Back to Events
-            </Link>
+            <Link href="/events" className="text-blue-600 hover:text-blue-800 transition-colors">← Back to Events</Link>
           </div>
           <h1 className="text-5xl font-bold text-gradient mb-4">👥 Event Registrations</h1>
           {event && (
@@ -144,13 +135,10 @@ const EventRegistrationsPage: React.FC = () => {
           )}
         </div>
 
-        {/* Registrations List */}
         <div className="max-w-6xl mx-auto">
           {registrations.length > 0 ? (
             <div className="card p-8 animate-fade-in">
-              <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                📋 Registered Students ({registrations.length})
-              </h3>
+              <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">📋 Registered Students ({registrations.length})</h3>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
@@ -163,34 +151,19 @@ const EventRegistrationsPage: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {registrations.map((registration) => (
-                      <tr key={registration.reg_id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                    {registrations.map(reg => (
+                      <tr key={reg.reg_id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                         <td className="py-4 px-2">
                           <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
-                              {registration.name.charAt(0).toUpperCase()}
-                            </div>
-                            <div>
-                              <div className="font-semibold text-gray-800">{registration.name}</div>
-                            </div>
+                            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">{reg.name.charAt(0).toUpperCase()}</div>
+                            <div><div className="font-semibold text-gray-800">{reg.name}</div></div>
                           </div>
                         </td>
-                        <td className="py-4 px-2 text-gray-600">{registration.email}</td>
-                        <td className="py-4 px-2">
-                          <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-semibold">
-                            {registration.student_id}
-                          </span>
-                        </td>
-                        <td className="py-4 px-2 text-gray-600">
-                          {new Date(registration.registration_date).toLocaleDateString()}
-                        </td>
+                        <td className="py-4 px-2 text-gray-600">{reg.email}</td>
+                        <td className="py-4 px-2"><span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-semibold">{reg.student_id}</span></td>
+                        <td className="py-4 px-2 text-gray-600">{new Date(reg.registration_date).toLocaleDateString()}</td>
                         <td className="py-4 px-2 text-center">
-                          <Link
-                            href={`/attendance/${eventId}?student=${registration.student_id}`}
-                            className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold hover:bg-green-200 transition-colors"
-                          >
-                            ✅ Mark Attendance
-                          </Link>
+                          <Link href={`/attendance/${eventId}?student=${reg.student_id}`} className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold hover:bg-green-200 transition-colors">✅ Mark Attendance</Link>
                         </td>
                       </tr>
                     ))}
@@ -202,12 +175,8 @@ const EventRegistrationsPage: React.FC = () => {
             <div className="text-center py-16 animate-fade-in">
               <div className="text-8xl mb-6">👥</div>
               <h3 className="text-3xl font-bold text-gray-700 mb-4">No Registrations Yet</h3>
-              <p className="text-lg text-gray-500 mb-8">
-                Students haven't registered for this event yet. Share the event with students to get registrations!
-              </p>
-              <Link href="/events" className="btn-primary">
-                ← Back to Events
-              </Link>
+              <p className="text-lg text-gray-500 mb-8">Students haven't registered for this event yet. Share the event with students to get registrations!</p>
+              <Link href="/events" className="btn-primary">← Back to Events</Link>
             </div>
           )}
         </div>
