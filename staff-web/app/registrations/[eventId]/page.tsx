@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 
 const BACKEND_URL = (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001').replace(/\/$/, '');
@@ -24,33 +24,19 @@ interface Event {
   college_id: string;
 }
 
-interface AttendanceRecord {
-  att_id: number;
-  student_id: number;
-  event_id: number;
-  status: string;
-  marked_date: string;
-}
-
-const EventAttendancePage: React.FC = () => {
+const EventRegistrationsPage: React.FC = () => {
   const params = useParams();
-  const searchParams = useSearchParams();
   const eventId = params.eventId as string;
-  const studentId = searchParams.get('student');
 
   const [event, setEvent] = useState<Event | null>(null);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
-  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [markingAttendance, setMarkingAttendance] = useState<number | null>(null);
 
   useEffect(() => {
     if (eventId) {
       fetchEventDetails();
       fetchRegistrations();
-      fetchAttendanceRecords();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventId]);
@@ -72,66 +58,17 @@ const EventAttendancePage: React.FC = () => {
 
   const fetchRegistrations = async () => {
     try {
+      setLoading(true);
       const response = await fetch(`${BACKEND_URL}/staff/registrations/${eventId}`);
-      if (response.ok) {
-        const data: Registration[] = await response.json();
-        setRegistrations(data);
-      } else {
-        console.error('Failed to fetch registrations:', response.status);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    } catch (err) {
-      console.error('Error fetching registrations:', err);
-    }
-  };
-
-  const fetchAttendanceRecords = async () => {
-    try {
-      const response = await fetch(`${BACKEND_URL}/staff/attendance/${eventId}`);
-      if (response.ok) {
-        const data: AttendanceRecord[] = await response.json();
-        setAttendanceRecords(data);
-      } else {
-        console.error('Failed to fetch attendance records:', response.status);
-      }
-    } catch (err) {
-      console.error('Error fetching attendance records:', err);
-      setError('Failed to load attendance records.');
+      const data: Registration[] = await response.json();
+      setRegistrations(data);
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch registrations');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const markAttendance = async (studentIdNum: number, status: 'present' | 'absent') => {
-    setMarkingAttendance(studentIdNum);
-    setMessage(null);
-    setError(null);
-
-    try {
-      const response = await fetch(`${BACKEND_URL}/staff/attendance`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          student_id: studentIdNum,
-          event_id: parseInt(eventId, 10),
-          status: status
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to mark attendance');
-      }
-
-      setMessage(`Attendance marked as ${status} successfully!`);
-      // Refresh attendance records
-      await fetchAttendanceRecords();
-    } catch (err: any) {
-      setError(err.message || 'Error marking attendance');
-    } finally {
-      setMarkingAttendance(null);
     }
   };
 
@@ -146,44 +83,23 @@ const EventAttendancePage: React.FC = () => {
     }
   };
 
-  const getAttendanceStatus = (studentIdNum: number) => {
-    const record = attendanceRecords.find(record => record.student_id === studentIdNum);
-    return record ? record.status : null;
-  };
-
-  const getAttendanceIcon = (status: string | null) => {
-    switch (status) {
-      case 'present': return '✅';
-      case 'absent': return '❌';
-      default: return '⏳';
-    }
-  };
-
-  const getAttendanceColor = (status: string | null) => {
-    switch (status) {
-      case 'present': return 'text-green-600 bg-green-100';
-      case 'absent': return 'text-red-600 bg-red-100';
-      default: return 'text-gray-600 bg-gray-100';
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen gradient-bg flex items-center justify-center">
         <div className="text-center">
-          <div className="text-6xl mb-4 animate-spin">✅</div>
-          <h2 className="text-2xl font-bold text-gray-700">Loading attendance data...</h2>
+          <div className="text-6xl mb-4 animate-spin">👥</div>
+          <h2 className="text-2xl font-bold text-gray-700">Loading registrations...</h2>
         </div>
       </div>
     );
   }
 
-  if (error && !event) {
+  if (error) {
     return (
       <div className="min-h-screen gradient-bg flex items-center justify-center">
         <div className="text-center">
           <div className="text-6xl mb-4">❌</div>
-          <h2 className="text-2xl font-bold text-red-600 mb-4">Error Loading Data</h2>
+          <h2 className="text-2xl font-bold text-red-600 mb-4">Error Loading Registrations</h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <Link href="/events" className="btn-primary">
             ← Back to Events
@@ -203,7 +119,7 @@ const EventAttendancePage: React.FC = () => {
               ← Back to Events
             </Link>
           </div>
-          <h1 className="text-5xl font-bold text-gradient mb-4">✅ Mark Attendance</h1>
+          <h1 className="text-5xl font-bold text-gradient mb-4">👥 Event Registrations</h1>
           {event && (
             <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 max-w-2xl mx-auto shadow-lg">
               <div className="flex items-center justify-center space-x-3 mb-4">
@@ -220,7 +136,7 @@ const EventAttendancePage: React.FC = () => {
                   <p className="text-green-600">{new Date(event.date).toLocaleDateString()}</p>
                 </div>
                 <div className="bg-purple-50 p-3 rounded-lg">
-                  <span className="font-semibold text-purple-800">Total Students:</span>
+                  <span className="font-semibold text-purple-800">Total Registrations:</span>
                   <p className="text-purple-600 font-bold text-lg">{registrations.length}</p>
                 </div>
               </div>
@@ -228,77 +144,66 @@ const EventAttendancePage: React.FC = () => {
           )}
         </div>
 
-        {/* Messages */}
-        {message && (
-          <div className="max-w-4xl mx-auto mb-8 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg animate-fade-in">
-            ✅ {message}
-          </div>
-        )}
-        {error && (
-          <div className="max-w-4xl mx-auto mb-8 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg animate-fade-in">
-            ❌ {error}
-          </div>
-        )}
-
-        {/* Attendance List */}
+        {/* Registrations List */}
         <div className="max-w-6xl mx-auto">
           {registrations.length > 0 ? (
             <div className="card p-8 animate-fade-in">
               <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                📋 Student Attendance ({registrations.length} students)
+                📋 Registered Students ({registrations.length})
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {registrations.map((registration, index) => {
-                  const attendanceStatus = getAttendanceStatus(registration.student_id);
-                  return (
-                    <div key={registration.reg_id} className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
-                      <div className="flex items-center space-x-4 mb-4">
-                        <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                          {registration.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-gray-800">{registration.name}</h4>
-                          <p className="text-sm text-gray-600">{registration.email}</p>
-                          <p className="text-xs text-gray-500">ID: {registration.student_id}</p>
-                        </div>
-                      </div>
-
-                      <div className="mb-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-gray-600">Status:</span>
-                          <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getAttendanceColor(attendanceStatus)}`}>
-                            {getAttendanceIcon(attendanceStatus)} {attendanceStatus || 'Not Marked'}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-left py-4 px-2 font-semibold text-gray-700">Student</th>
+                      <th className="text-left py-4 px-2 font-semibold text-gray-700">Email</th>
+                      <th className="text-left py-4 px-2 font-semibold text-gray-700">Student ID</th>
+                      <th className="text-left py-4 px-2 font-semibold text-gray-700">Registration Date</th>
+                      <th className="text-center py-4 px-2 font-semibold text-gray-700">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {registrations.map((registration) => (
+                      <tr key={registration.reg_id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        <td className="py-4 px-2">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                              {registration.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <div className="font-semibold text-gray-800">{registration.name}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-2 text-gray-600">{registration.email}</td>
+                        <td className="py-4 px-2">
+                          <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm font-semibold">
+                            {registration.student_id}
                           </span>
-                        </div>
-                      </div>
-
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => markAttendance(registration.student_id, 'present')}
-                          disabled={markingAttendance === registration.student_id}
-                          className="flex-1 bg-green-100 text-green-800 px-3 py-2 rounded-lg text-sm font-semibold hover:bg-green-200 transition-colors disabled:opacity-50"
-                        >
-                          {markingAttendance === registration.student_id ? '⏳' : '✅'} Present
-                        </button>
-                        <button
-                          onClick={() => markAttendance(registration.student_id, 'absent')}
-                          disabled={markingAttendance === registration.student_id}
-                          className="flex-1 bg-red-100 text-red-800 px-3 py-2 rounded-lg text-sm font-semibold hover:bg-red-200 transition-colors disabled:opacity-50"
-                        >
-                          {markingAttendance === registration.student_id ? '⏳' : '❌'} Absent
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+                        </td>
+                        <td className="py-4 px-2 text-gray-600">
+                          {new Date(registration.registration_date).toLocaleDateString()}
+                        </td>
+                        <td className="py-4 px-2 text-center">
+                          <Link
+                            href={`/attendance/${eventId}?student=${registration.student_id}`}
+                            className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold hover:bg-green-200 transition-colors"
+                          >
+                            ✅ Mark Attendance
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           ) : (
             <div className="text-center py-16 animate-fade-in">
               <div className="text-8xl mb-6">👥</div>
-              <h3 className="text-3xl font-bold text-gray-700 mb-4">No Students Registered</h3>
+              <h3 className="text-3xl font-bold text-gray-700 mb-4">No Registrations Yet</h3>
               <p className="text-lg text-gray-500 mb-8">
-                No students have registered for this event yet.
+                Students haven't registered for this event yet. Share the event with students to get registrations!
               </p>
               <Link href="/events" className="btn-primary">
                 ← Back to Events
@@ -311,4 +216,4 @@ const EventAttendancePage: React.FC = () => {
   );
 };
 
-export default EventAttendancePage;
+export default EventRegistrationsPage;
