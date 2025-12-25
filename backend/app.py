@@ -1017,11 +1017,3 @@ def get_staff_feedback():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-if __name__ == '__main__':
-    print("🚀 Starting Campus Event Management Backend...")
-    print("📊 Database Type:", DB_TYPE.upper())
-    print("🌐 Server running on: http://0.0.0.0:5001")
-    print("📱 Staff Portal: http://localhost:3000")
-    print("📱 Student App: http://localhost:3001")
-    port = int(os.getenv("PORT", 5001))
-    app.run(host="0.0.0.0", port=port)
