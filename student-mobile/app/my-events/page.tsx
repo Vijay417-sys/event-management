@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import ClientOnly from '@/components/ClientOnly';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://10.30.179.189:5001';
 
@@ -37,7 +39,8 @@ const MyEventsPage: React.FC = () => {
   useEffect(() => {
     const fetchMyEvents = async () => {
       try {
-        const response = await fetch(`${API}/registrations`);
+        const response = await fetch(`${API_BASE_URL}/registrations`);
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
