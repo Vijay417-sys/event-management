@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import EventCard from '@/components/EventCard';
 import ClientOnly from '@/components/ClientOnly';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://10.30.179.189:5001';
 
