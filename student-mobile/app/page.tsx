@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://10.30.179.189:5001';
+
 interface Stats {
   eventsRegistered: number;
   eventsAttended: number;
@@ -18,17 +20,15 @@ const StudentDashboard: React.FC = () => {
 
   const fetchStats = async () => {
     try {
-      // Fetch registrations
-        const registrationsResponse = await fetch('http://10.30.179.189:5001/registrations');
-        const registrations = await registrationsResponse.json();
-        
-        // Fetch attendance
-        const attendanceResponse = await fetch('http://10.30.179.189:5001/attendance');
+      const registrationsResponse = await fetch(`${API}/registrations`);
+      const registrations = await registrationsResponse.json();
+
+      const attendanceResponse = await fetch(`${API}/attendance`);
       const attendance = await attendanceResponse.json();
-      
+
       setStats({
-        eventsRegistered: registrations.length,
-        eventsAttended: attendance.filter((a: any) => a.status === 'present').length
+        eventsRegistered: Array.isArray(registrations) ? registrations.length : 0,
+        eventsAttended: Array.isArray(attendance) ? attendance.filter((a: any) => a.status === 'present').length : 0
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -38,7 +38,6 @@ const StudentDashboard: React.FC = () => {
   };
   return (
     <div>
-      {/* Quick Stats */}
       <div className="mobile-stats">
         <div className="mobile-stat-card">
           <div className="mobile-stat-number">
@@ -54,7 +53,6 @@ const StudentDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Feature Cards */}
       <div className="space-y-4">
         {[
           {
@@ -97,7 +95,6 @@ const StudentDashboard: React.FC = () => {
         ))}
       </div>
 
-      {/* Quick Actions */}
       <div className="mobile-card mobile-text-center">
         <h3 className="mobile-text-large mobile-mb-4">Quick Actions</h3>
         <div className="mobile-grid-3">
@@ -111,4 +108,3 @@ const StudentDashboard: React.FC = () => {
 };
 
 export default StudentDashboard;
-
