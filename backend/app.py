@@ -1,5 +1,5 @@
 
-
+import os
 import pymysql
 import sqlite3
 from datetime import datetime
@@ -1023,4 +1023,5 @@ if __name__ == '__main__':
     print("🌐 Server running on: http://0.0.0.0:5001")
     print("📱 Staff Portal: http://localhost:3000")
     print("📱 Student App: http://localhost:3001")
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    port = int(os.getenv("PORT", 5001))
+    app.run(host="0.0.0.0", port=port)
