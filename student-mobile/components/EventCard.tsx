@@ -1,4 +1,8 @@
+'use client';
+
 import React, { useState } from 'react';
+
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://10.30.179.189:5001';
 
 interface EventCardProps {
   event: {
@@ -26,8 +30,7 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
     setError(null);
 
     try {
-      // First find or create student
-      const studentResponse = await fetch('http://10.30.179.189:5001/students/find-or-create', {
+      const studentResponse = await fetch(`${API}/students/find-or-create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -45,8 +48,7 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
         throw new Error(studentData.error || 'Failed to find or create student');
       }
 
-      // Then register for event
-      const registerResponse = await fetch('http://10.30.179.189:5001/register', {
+      const registerResponse = await fetch(`${API}/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -76,8 +78,8 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+    const d = new Date(dateString);
+    return d.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -97,55 +99,17 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
       </div>
 
       {!showRegistration ? (
-        <button
-          onClick={() => setShowRegistration(true)}
-          className="mobile-btn"
-        >
-          Register for Event
-        </button>
+        <button onClick={() => setShowRegistration(true)} className="mobile-btn">Register for Event</button>
       ) : (
         <div className="mobile-form">
           <h4 className="mobile-form-title">Register for Event</h4>
           <form onSubmit={handleRegister}>
-            <input
-              type="text"
-              placeholder="Your Name"
-              value={studentName}
-              onChange={(e) => setStudentName(e.target.value)}
-              className="mobile-input"
-              required
-            />
-            <input
-              type="email"
-              placeholder="Your Email"
-              value={studentEmail}
-              onChange={(e) => setStudentEmail(e.target.value)}
-              className="mobile-input"
-              required
-            />
-            <input
-              type="text"
-              placeholder="College ID"
-              value={studentCollegeId}
-              onChange={(e) => setStudentCollegeId(e.target.value)}
-              className="mobile-input"
-              required
-            />
+            <input type="text" placeholder="Your Name" value={studentName} onChange={(e) => setStudentName(e.target.value)} className="mobile-input" required />
+            <input type="email" placeholder="Your Email" value={studentEmail} onChange={(e) => setStudentEmail(e.target.value)} className="mobile-input" required />
+            <input type="text" placeholder="College ID" value={studentCollegeId} onChange={(e) => setStudentCollegeId(e.target.value)} className="mobile-input" required />
             <div className="mobile-grid-2">
-              <button
-                type="submit"
-                disabled={isRegistering}
-                className="mobile-btn"
-              >
-                {isRegistering ? 'Registering...' : 'Register'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowRegistration(false)}
-                className="mobile-btn-secondary"
-              >
-                Cancel
-              </button>
+              <button type="submit" disabled={isRegistering} className="mobile-btn">{isRegistering ? 'Registering...' : 'Register'}</button>
+              <button type="button" onClick={() => setShowRegistration(false)} className="mobile-btn-secondary">Cancel</button>
             </div>
           </form>
         </div>
