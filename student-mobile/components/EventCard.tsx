@@ -30,7 +30,7 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
     setError(null);
 
     try {
-      const studentResponse = await fetch(`${API}/students/find-or-create`, {
+      const studentResponse = await fetch(`${API_BASE_URL}/students/find-or-create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -48,7 +48,7 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
         throw new Error(studentData.error || 'Failed to find or create student');
       }
 
-      const registerResponse = await fetch(`${API}/register`, {
+      const registerResponse = await fetch(`${API_BASE_URL}/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
