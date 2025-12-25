@@ -30,6 +30,7 @@ const FeedbackPage: React.FC = () => {
     const fetchEvents = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/events`);
+
         
         if (response.ok) {
           const data = await response.json();
