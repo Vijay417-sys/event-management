@@ -9,21 +9,26 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
-# Try to import config, fallback to defaults
+# Read DB config from config.py (env variables will be used in Railway)
 try:
     from config import MYSQL_CONFIG, USE_MYSQL
-except ImportError:
+except Exception:
+    # Fallback: simple defaults (only used if config.py missing)
+    import os
+    USE_MYSQL = False
     MYSQL_CONFIG = {
-        'host': 'localhost',
-        'user': 'root',
-        'password': '',
-        'database': 'campus_events',
-        'charset': 'utf8mb4'
+        "host": os.getenv("MYSQLHOST", "localhost"),
+        "user": os.getenv("MYSQLUSER", "root"),
+        "password": os.getenv("MYSQLPASSWORD", ""),
+        "db": os.getenv("MYSQLDATABASE", "campus_events"),
+        "database": os.getenv("MYSQLDATABASE", "campus_events"),
+        "port": int(os.getenv("MYSQLPORT", 3306)),
+        "charset": "utf8mb4"
     }
-    USE_MYSQL = False  # Default to SQLite if config not found
 
-# Database type
+# Database type string used by health endpoint / logs
 DB_TYPE = 'mysql' if USE_MYSQL else 'sqlite'
+
 
 def get_db():
     db = getattr(g, '_database', None)
@@ -78,159 +83,190 @@ def close_connection(exception):
         db.close()
 
 def init_db():
-    with app.app_context():
-        try:
-            # Try MySQL first, fallback to SQLite
-            db = None
-            cursor = None
-            current_db_type = 'sqlite'  # Default to SQLite
-            
-            if USE_MYSQL:
+    """
+    Initialize DB connection and create tables.
+    Tries MySQL first (using MYSQL_CONFIG + env vars). If MySQL fails,
+    falls back to SQLite and continues. This function will NOT raise.
+    """
+    try:
+        current_db_type = 'sqlite'
+        db = None
+        cursor = None
+
+        if USE_MYSQL:
+            try:
+                # build params: accept either 'db' or 'database' key
+                mysql_db = MYSQL_CONFIG.get("db") or MYSQL_CONFIG.get("database")
+                conn_params = {
+                    "host": MYSQL_CONFIG.get("host"),
+                    "user": MYSQL_CONFIG.get("user"),
+                    "password": MYSQL_CONFIG.get("password", ""),
+                    "database": mysql_db,
+                    "port": int(MYSQL_CONFIG.get("port", 3306)),
+                    "charset": MYSQL_CONFIG.get("charset", "utf8mb4"),
+                }
+                # Import locally to avoid module-level import issues
+                import pymysql
+                conn_params_for_connect = {k: v for k, v in conn_params.items() if v is not None}
+                db = pymysql.connect(**conn_params_for_connect, connect_timeout=5)
+                cursor = db.cursor()
+                # Ensure database exists (if permitted)
                 try:
-                    db = pymysql.connect(**MYSQL_CONFIG)
-                    cursor = db.cursor()
-                    cursor.execute("CREATE DATABASE IF NOT EXISTS campus_events")
-                    cursor.execute("USE campus_events")
-                    current_db_type = 'mysql'
-                    print("Connected to MySQL successfully!")
-                except Exception as e:
-                    print(f"MySQL connection failed: {e}")
-                    print("Falling back to SQLite...")
-                    db = sqlite3.connect('events.db')
-                    db.row_factory = sqlite3.Row
-                    cursor = db.cursor()
-                    current_db_type = 'sqlite'
-            
-            # Create tables based on database type
-            if current_db_type == 'mysql':
-                # MySQL table creation
-                cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS Events (
-                        event_id INT AUTO_INCREMENT PRIMARY KEY,
-                        college_id VARCHAR(100) NOT NULL,
-                        name VARCHAR(255) NOT NULL,
-                        type VARCHAR(100) NOT NULL,
-                        date DATE NOT NULL,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    );
-                """)
-                
-                cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS Students (
-                        student_id INT AUTO_INCREMENT PRIMARY KEY,
-                        college_id VARCHAR(100) NOT NULL,
-                        name VARCHAR(255) NOT NULL,
-                        email VARCHAR(255) NOT NULL UNIQUE,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    );
-                """)
-                
-                cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS Registrations (
-                        reg_id INT AUTO_INCREMENT PRIMARY KEY,
-                        student_id INT NOT NULL,
-                        event_id INT NOT NULL,
-                        registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        UNIQUE(student_id, event_id),
-                        FOREIGN KEY (student_id) REFERENCES Students(student_id) ON DELETE CASCADE,
-                        FOREIGN KEY (event_id) REFERENCES Events(event_id) ON DELETE CASCADE
-                    );
-                """)
-                
-                cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS Attendance (
-                        att_id INT AUTO_INCREMENT PRIMARY KEY,
-                        student_id INT NOT NULL,
-                        event_id INT NOT NULL,
-                        status ENUM('present', 'absent') NOT NULL,
-                        attendance_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        UNIQUE(student_id, event_id),
-                        FOREIGN KEY (student_id) REFERENCES Students(student_id) ON DELETE CASCADE,
-                        FOREIGN KEY (event_id) REFERENCES Events(event_id) ON DELETE CASCADE
-                    );
-                """)
-                
-                cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS Feedback (
-                        feedback_id INT AUTO_INCREMENT PRIMARY KEY,
-                        student_id INT NOT NULL,
-                        event_id INT NOT NULL,
-                        rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
-                        feedback_text TEXT,
-                        feedback_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        UNIQUE(student_id, event_id),
-                        FOREIGN KEY (student_id) REFERENCES Students(student_id) ON DELETE CASCADE,
-                        FOREIGN KEY (event_id) REFERENCES Events(event_id) ON DELETE CASCADE
-                    );
-                """)
-            else:
-                # SQLite table creation
-                cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS Events (
-                        event_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        college_id TEXT NOT NULL,
-                        name TEXT NOT NULL,
-                        type TEXT NOT NULL,
-                        date TEXT NOT NULL,
-                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                    );
-                """)
-                
-                cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS Students (
-                        student_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        college_id TEXT NOT NULL,
-                        name TEXT NOT NULL,
-                        email TEXT NOT NULL UNIQUE,
-                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                    );
-                """)
-                
-                cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS Registrations (
-                        reg_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        student_id INTEGER NOT NULL,
-                        event_id INTEGER NOT NULL,
-                        registration_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-                        UNIQUE(student_id, event_id),
-                        FOREIGN KEY (student_id) REFERENCES Students(student_id),
-                        FOREIGN KEY (event_id) REFERENCES Events(event_id)
-                    );
-                """)
-                
-                cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS Attendance (
-                        att_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        student_id INTEGER NOT NULL,
-                        event_id INTEGER NOT NULL,
-                        status TEXT NOT NULL,
-                        attendance_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-                        UNIQUE(student_id, event_id),
-                        FOREIGN KEY (student_id) REFERENCES Students(student_id),
-                        FOREIGN KEY (event_id) REFERENCES Events(event_id)
-                    );
-                """)
-                
-                cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS Feedback (
-                        feedback_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        student_id INTEGER NOT NULL,
-                        event_id INTEGER NOT NULL,
-                        rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
-                        feedback_text TEXT,
-                        feedback_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-                        UNIQUE(student_id, event_id),
-                        FOREIGN KEY (student_id) REFERENCES Students(student_id),
-                        FOREIGN KEY (event_id) REFERENCES Events(event_id)
-                    );
-                """)
-            
+                    cursor.execute(f"CREATE DATABASE IF NOT EXISTS `{mysql_db}`")
+                    cursor.execute(f"USE `{mysql_db}`")
+                except Exception:
+                    # Some managed DBs may not allow CREATE DATABASE — ignore
+                    pass
+                current_db_type = 'mysql'
+                print("✅ Connected to MySQL (init_db)")
+            except Exception as e:
+                print("❌ MySQL connection failed in init_db():", e)
+                print("ℹ️ Falling back to SQLite...")
+
+        if current_db_type == 'sqlite' or db is None:
+            import sqlite3
+            db = sqlite3.connect('events.db', check_same_thread=False)
+            # Use row factory so fetch results can be dict-like in some places
+            try:
+                db.row_factory = sqlite3.Row
+            except Exception:
+                pass
+            cursor = db.cursor()
+            current_db_type = 'sqlite'
+            print("✅ Using SQLite fallback (events.db)")
+
+        # CREATE TABLES (works for both MySQL and SQLite — uses compatible SQL)
+        # Events
+        try:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS Events (
+                    event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    college_id TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    type TEXT NOT NULL,
+                    date TEXT NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                );
+            """)
+        except Exception:
+            # Try MySQL-style schema (explicit INT AUTO_INCREMENT if needed)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS Events (
+                    event_id INT AUTO_INCREMENT PRIMARY KEY,
+                    college_id VARCHAR(100) NOT NULL,
+                    name VARCHAR(255) NOT NULL,
+                    type VARCHAR(100) NOT NULL,
+                    date DATE NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """)
+
+        # Students
+        try:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS Students (
+                    student_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    college_id TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    email TEXT NOT NULL UNIQUE,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                );
+            """)
+        except Exception:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS Students (
+                    student_id INT AUTO_INCREMENT PRIMARY KEY,
+                    college_id VARCHAR(100) NOT NULL,
+                    name VARCHAR(255) NOT NULL,
+                    email VARCHAR(255) NOT NULL UNIQUE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """)
+
+        # Registrations
+        try:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS Registrations (
+                    reg_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    student_id INTEGER NOT NULL,
+                    event_id INTEGER NOT NULL,
+                    registration_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(student_id, event_id)
+                );
+            """)
+        except Exception:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS Registrations (
+                    reg_id INT AUTO_INCREMENT PRIMARY KEY,
+                    student_id INT NOT NULL,
+                    event_id INT NOT NULL,
+                    registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(student_id, event_id)
+                );
+            """)
+
+        # Attendance
+        try:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS Attendance (
+                    att_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    student_id INTEGER NOT NULL,
+                    event_id INTEGER NOT NULL,
+                    status TEXT NOT NULL,
+                    attendance_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(student_id, event_id)
+                );
+            """)
+        except Exception:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS Attendance (
+                    att_id INT AUTO_INCREMENT PRIMARY KEY,
+                    student_id INT NOT NULL,
+                    event_id INT NOT NULL,
+                    status ENUM('present','absent') NOT NULL,
+                    attendance_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(student_id, event_id)
+                );
+            """)
+
+        # Feedback
+        try:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS Feedback (
+                    feedback_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    student_id INTEGER NOT NULL,
+                    event_id INTEGER NOT NULL,
+                    rating INTEGER NOT NULL,
+                    feedback_text TEXT,
+                    feedback_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(student_id, event_id)
+                );
+            """)
+        except Exception:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS Feedback (
+                    feedback_id INT AUTO_INCREMENT PRIMARY KEY,
+                    student_id INT NOT NULL,
+                    event_id INT NOT NULL,
+                    rating INT NOT NULL,
+                    feedback_text TEXT,
+                    feedback_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(student_id, event_id)
+                );
+            """)
+
+        # commit if DB supports commit()
+        try:
             db.commit()
-            print(f"Database initialized successfully using {current_db_type.upper()}!")
-            
-        except Exception as e:
-            print(f"Database initialization error: {e}")
-            print("Please check your database configuration.")
+        except Exception:
+            pass
+
+        print(f"Database initialized successfully using {current_db_type.upper()}!")
+
+    except Exception as e:
+        print("Database initialization error (unexpected):", e)
+        print("Please check your database configuration.")
+
 
 # Initialize the database when the app starts
 with app.app_context():
