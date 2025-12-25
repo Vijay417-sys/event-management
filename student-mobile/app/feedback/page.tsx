@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import ClientOnly from '@/components/ClientOnly';
 
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://10.30.179.189:5001';
+
 interface Event {
   event_id: number;
   name: string;
@@ -25,13 +27,14 @@ const FeedbackPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    
     const fetchEvents = async () => {
       try {
-        const response = await fetch('http://10.30.179.189:5001/events');
+        const response = await fetch(`${API}/events`);
         if (response.ok) {
           const data = await response.json();
-          setEvents(data);
+          setEvents(Array.isArray(data) ? data : []);
+        } else {
+          throw new Error('Failed to load events');
         }
       } catch (err: any) {
         setError('Failed to load events');
@@ -46,7 +49,6 @@ const FeedbackPage: React.FC = () => {
   const handleSubmitFeedback = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate required fields
     if (!selectedEvent) {
       setError('Please select an event');
       return;
@@ -77,8 +79,7 @@ const FeedbackPage: React.FC = () => {
     setError(null);
 
     try {
-      // First, find or create the student
-      const studentResponse = await fetch('http://10.30.179.189:5001/students/find-or-create', {
+      const studentResponse = await fetch(`${API}/students/find-or-create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -96,8 +97,7 @@ const FeedbackPage: React.FC = () => {
         throw new Error(studentData.error || 'Failed to find or create student');
       }
 
-      // Then submit the feedback
-      const feedbackResponse = await fetch('http://10.30.179.189:5001/feedback', {
+      const feedbackResponse = await fetch(`${API}/feedback`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -189,7 +189,6 @@ const FeedbackPage: React.FC = () => {
               </select>
             </div>
 
-            {/* Student Information */}
             <div className="mobile-mb-4">
               <label className="block text-gray-700 font-semibold mb-2">Your Name</label>
               <input
