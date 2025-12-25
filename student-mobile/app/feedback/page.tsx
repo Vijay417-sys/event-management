@@ -81,7 +81,7 @@ const FeedbackPage: React.FC = () => {
     setError(null);
 
     try {
-      const studentResponse = await fetch(`${API}/students/find-or-create`, {
+      const studentResponse = await fetch(`${API_BASE_URL}/students/find-or-create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
