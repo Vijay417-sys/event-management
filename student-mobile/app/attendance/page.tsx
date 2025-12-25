@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import ClientOnly from '@/components/ClientOnly';
 
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://10.30.179.189:5001';
+
 interface AttendanceRecord {
   attendance_id: number;
   student_id: number;
@@ -20,17 +22,14 @@ const StudentAttendancePage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    
     const fetchAttendance = async () => {
       try {
-        // For demo purposes, we'll fetch all attendance records
-        // In a real app, you'd filter by student ID
-        const response = await fetch('http://10.30.179.189:5001/attendance');
+        const response = await fetch(`${API}/attendance`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        setAttendanceRecords(data);
+        setAttendanceRecords(Array.isArray(data) ? data : []);
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -42,7 +41,7 @@ const StudentAttendancePage: React.FC = () => {
   }, []);
 
   const getStatusIcon = (status: string) => {
-    switch (status.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case 'present': return '✅';
       case 'absent': return '❌';
       default: return '⏳';
@@ -50,7 +49,7 @@ const StudentAttendancePage: React.FC = () => {
   };
 
   const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case 'present': return 'text-green-600 bg-green-100';
       case 'absent': return 'text-red-600 bg-red-100';
       default: return 'text-gray-600 bg-gray-100';
@@ -58,7 +57,7 @@ const StudentAttendancePage: React.FC = () => {
   };
 
   const getEventTypeIcon = (type: string) => {
-    switch (type.toLowerCase()) {
+    switch (type?.toLowerCase()) {
       case 'hackathon': return '💻';
       case 'workshop': return '🔧';
       case 'seminar': return '🎓';
@@ -113,7 +112,7 @@ const StudentAttendancePage: React.FC = () => {
                   </div>
                 </div>
                 <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(record.status)}`}>
-                  {getStatusIcon(record.status)} {record.status.toUpperCase()}
+                  {getStatusIcon(record.status)} {String(record.status).toUpperCase()}
                 </span>
               </div>
               
@@ -121,13 +120,13 @@ const StudentAttendancePage: React.FC = () => {
                 <div className="mobile-text-center">
                   <span className="mobile-text-small mobile-text-muted">Event Date:</span>
                   <p className="mobile-text-large">
-                    {new Date(record.event_date).toLocaleDateString()}
+                    {record.event_date ? new Date(record.event_date).toLocaleDateString() : '-'}
                   </p>
                 </div>
                 <div className="mobile-text-center">
                   <span className="mobile-text-small mobile-text-muted">Attendance Marked:</span>
                   <p className="mobile-text-large">
-                    {new Date(record.marked_date).toLocaleDateString()}
+                    {record.marked_date ? new Date(record.marked_date).toLocaleDateString() : '-'}
                   </p>
                 </div>
               </div>
