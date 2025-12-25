@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import EventCard from '@/components/EventCard';
 import ClientOnly from '@/components/ClientOnly';
 
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://10.30.179.189:5001';
+
 interface Event {
   event_id: number;
   college_id: string;
@@ -18,22 +20,15 @@ const StudentEventsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    
     const fetchEvents = async () => {
       try {
-        console.log('Fetching events from: http://10.30.179.189:5001/events');
-        const response = await fetch('http://10.30.179.189:5001/events');
-        console.log('Response status:', response.status);
-        console.log('Response ok:', response.ok);
-        
+        const response = await fetch(`${API}/events`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data: Event[] = await response.json();
-        console.log('Events data:', data);
-        setEvents(data);
+        setEvents(Array.isArray(data) ? data : []);
       } catch (err: any) {
-        console.error('Error fetching events:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -75,7 +70,6 @@ const StudentEventsPage: React.FC = () => {
       </div>
     }>
       <div>
-      {/* Events List */}
       {events.length === 0 ? (
         <div className="mobile-card mobile-text-center">
           <div className="text-6xl mb-4">📅</div>
