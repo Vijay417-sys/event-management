@@ -20,7 +20,8 @@ const StudentDashboard: React.FC = () => {
 
   const fetchStats = async () => {
     try {
-      const registrationsResponse = await fetch(`${API}/registrations`);
+      const registrationsResponse = await fetch(`${API_BASE_URL}/registrations`);
+
       const registrations = await registrationsResponse.json();
 
       const attendanceResponse = await fetch(`${API}/attendance`);
