@@ -26,7 +26,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-title" content="Campus Events" />
       </head>
       <body>
-        {/* Clean Mobile Header */}
         <header className="mobile-header">
           <h1 className="text-2xl font-bold text-gray-800">🎓 Student Portal</h1>
           <p className="text-sm text-gray-600 mt-2">Campus Event Management</p>
@@ -34,7 +33,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         <main className="mobile-container">{children}</main>
 
-        {/* Clean Mobile Navigation */}
         <nav className="mobile-nav">
           <div className="flex justify-around">
             <a href="/" className="mobile-nav-item">
@@ -64,4 +62,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
-
