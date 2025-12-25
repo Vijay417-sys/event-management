@@ -29,7 +29,8 @@ const FeedbackPage: React.FC = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await fetch(`${API}/events`);
+        const response = await fetch(`${API_BASE_URL}/events`);
+        
         if (response.ok) {
           const data = await response.json();
           setEvents(Array.isArray(data) ? data : []);
