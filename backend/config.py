@@ -1,13 +1,11 @@
-# MySQL Database Configuration
-# Update these values with your MySQL credentials
+import os
 
 MYSQL_CONFIG = {
-    'host': 'localhost',
-    'user': 'root',  # Change this to your MySQL username
-    'password': 'campus123',  # Change this to your MySQL password
-    'database': 'campus_events',
-    'charset': 'utf8mb4'
+    "host": os.getenv("MYSQLHOST"),
+    "user": os.getenv("MYSQLUSER"),
+    "password": os.getenv("MYSQLPASSWORD"),
+    "database": os.getenv("MYSQLDATABASE"),
+    "port": int(os.getenv("MYSQLPORT", 3306)),
+    "charset": "utf8mb4",
+    "cursorclass": None
 }
-
-# If you don't have MySQL, the app will fallback to SQLite
-USE_MYSQL = True  # Set to False to use SQLite instead
